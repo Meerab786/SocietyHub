@@ -162,7 +162,7 @@ Build the solution and press **F5** or click **Start** to launch the application
 
 # 📄 Documentation
 
-Additional project documentation, including the **project report, database diagrams, and related resources**, can be found in the repository's documentation section.
+Additional project documentation, including the **database diagrams & schema, and related resources**, can be found in the repository's documentation section.
 
 ---
 
