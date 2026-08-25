@@ -160,12 +160,6 @@ Build the solution and press **F5** or click **Start** to launch the application
 
 ---
 
-# 📄 Documentation
-
-Additional project documentation, including the **database diagrams & schema, and related resources**, can be found in the repository's documentation section.
-
----
-
 # 💡 Future Improvements
 
 * 🔐 Role-based authentication
