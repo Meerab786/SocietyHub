@@ -162,12 +162,12 @@ Build the solution and press **F5** or click **Start** to launch the application
 
 # 💡 Future Improvements
 
-* 🔐 Role-based authentication
-* 🌐 Web-based version
-* 📱 Student & society portals
-* 🔔 Automated notifications
-* 📈 Advanced analytics
-* ☁️ Cloud database integration
+* Role-based authentication
+* Web-based version
+* Student & society portals
+* Automated notifications
+* Advanced analytics
+* Cloud database integration
 
 ---
 
