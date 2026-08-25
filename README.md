@@ -185,6 +185,4 @@ Additional project documentation, including the **project report, database diagr
 
 **Computer Science Student**
 
-*Semester Project — Object-Oriented Programming & Database Management Systems*
-
 </div>
