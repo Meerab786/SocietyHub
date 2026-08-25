@@ -1,0 +1,570 @@
+// SCHEMA START
+
+CREATE DATABASE db_finals;
+USE db_finals;
+
+Create table EventCategory(
+	id int primary key auto_increment,
+    name varchar(50) not null,
+    description varchar(255)
+    );
+    
+Create table SocietyCategory(
+	id int primary key auto_increment,
+    name varchar(50) not null,
+    description varchar(255)
+    );
+    
+Create table Sponsor(
+	id int primary key auto_increment,
+    email varchar(100) not null unique check(email like '%@%.%'),
+    organization varchar(100),
+    name varchar(100) not null,
+    phone varchar(15)
+    );
+    
+Create table Student(
+	id int primary key auto_increment,
+    email varchar(100) not null unique check(email like '%@%.%'),
+    department varchar(100),
+    name varchar(40) not null,
+    phone varchar(15),
+    batchYear year,
+    regNo varchar(20) not null unique,
+    status varchar(20) check(status in ('active', 'inactive', 'suspended'))
+    );
+    
+create table Venue(
+	id int primary key auto_increment,
+    name varchar(50),
+    location varchar(100) not null,
+    capacity int check(capacity > 0),
+    facilities varchar(255)
+    );
+    
+create table roles(
+	id int primary key auto_increment,
+    name varchar(20) not null unique,
+    description varchar(255)
+    );
+    
+create table Society(
+	id int primary key auto_increment,
+	name varchar(50) not null,
+	status varchar(20) check(status in ('active', 'inactive')),
+    foundedDate Date default null,
+    description varchar(255),
+    categoryId int,
+    foreign key (categoryId) references SocietyCategory(id) on delete set null
+    );
+    
+create table Announcement(
+	id int primary key auto_increment,
+    title varchar(50) not null,
+    message varchar(255),
+    postedAt datetime default current_timestamp,
+    societyId int,
+    foreign key (societyId) references Society(id) on delete cascade
+    );
+    
+create table Event(
+	id int primary key auto_increment,
+    status varchar(20) check(status in ('upcoming', 'ongoing', 'completed', 'cancelled', 'full')),
+    description varchar(255),
+    capacity int check (capacity > 0),
+    title varchar(50) not null,
+    eventDatetime Datetime default current_timestamp,
+    societyId int,
+    venueId int,
+    categoryId int,
+    foreign key (societyId) references Society(id) on delete set null,
+    foreign key (venueId) references Venue(id) on delete set null,
+    foreign key (categoryId) references EventCategory(id) on delete set null
+    );
+    
+create table EventRegistration(
+	id int primary key auto_increment,
+    registrationDate datetime default current_timestamp,
+    status varchar(20) check(status in ('registered', 'attended', 'cancelled', 'waitlist')),
+    cancellationDate datetime default null,
+    cancellationReason varchar(100) default null,
+    studentId int,
+	eventId int,
+	unique key (studentId, eventId),
+    foreign key (studentId) references Student(id) on delete cascade,
+    foreign key (eventId) references Event(id) on delete cascade
+    );
+    
+create table Sponsorship(
+	id int primary key auto_increment,
+    amount decimal(10,2) check(amount > 0),
+    sponsorshipDate datetime default current_timestamp,
+    sponsorId int default null,
+    eventId int,
+    foreign key (sponsorId) references Sponsor(id) on delete set null,
+    foreign key (eventId) references Event(id) on delete set null
+    );
+    
+create table Membership(
+	id int primary key auto_increment,
+    status varchar(20) check(status in ('active', 'inactive')),
+    joinDate datetime default current_timestamp,
+    leaveDate datetime default null,
+    studentId int,
+	societyId int,
+	unique key (studentId, societyId)  ,
+    foreign key (studentId) references Student(id) on delete cascade,
+    foreign key (societyId) references Society(id) on delete cascade
+    );
+    
+create table MembershipRoleHistory(
+	id int primary key auto_increment,
+    startDate datetime default current_timestamp,
+    endDate datetime default null,
+    roleId int not null,
+    membershipId int not null,
+    foreign key (roleId) references roles(id) on delete cascade,
+    foreign key (membershipId) references Membership(id) on delete cascade
+    );
+    
+create table Feedback(
+	id int primary key auto_increment,
+    rating int check (rating between 1 and 5),
+    comment varchar(255),
+    submittedAt datetime default current_timestamp,
+    eventId int,
+	studentId int,
+	unique key (studentId, eventId),
+    foreign key (eventId) references Event(id) on delete cascade,
+    foreign key (studentId) references Student(id) on delete set null
+    );
+    
+    DROP TABLE FeedBack; 
+CREATE TABLE Feedback (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    rating INT CHECK (rating BETWEEN 1 AND 5),
+    comment VARCHAR(255),
+    submittedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    eventId INT,
+    studentId INT NULL,
+
+    UNIQUE KEY (studentId, eventId),
+
+    FOREIGN KEY (eventId) REFERENCES Event(id) ON DELETE CASCADE,
+    FOREIGN KEY (studentId) REFERENCES Student(id) ON DELETE SET NULL
+);
+
+// SCHEMA END    
+    
+ --    ALTER TABLE Society
+-- ADD logoPath VARCHAR(255);
+
+-- INSERT INTO roles (name, description) VALUES
+-- ('Admin', 'Full access to manage system, users, events, and sponsorships'),
+-- ('Society President', 'Manages society activities, members, and events'),
+-- ('Event Organizer', 'Creates and manages events and event-related tasks'),
+-- ('Sponsor', 'External user who provides financial support for events'),
+-- ('Member', 'Regular participant who can join societies and events'),
+-- ('Volunteer', 'Helps in event execution and management'),
+-- ('Guest', 'Limited access user who can view public events only'),
+-- ('Finance Manager', 'Manages sponsorship funds and budgeting'),
+-- ('Committee Member', 'Assists in decision making for society operations');
+
+ -- ------------
+ --    VIEWS
+ -- ------------
+CREATE VIEW `vw_activeStudents` AS
+	select so.name as Society, s.Name, s.RegNo, s.Department from student s join membership m 
+    on s.id = m.studentid join society so on m.societyid = so.id where m.status = 'active' ;
+CREATE VIEW `vw_eventDetails` AS
+	Select e.title as Event, s.name as Society, v.Name as Venue, ec.name as Category from event e join venue v
+    on e.venueid = v.id join society s on s.id = e.societyid join eventcategory ec on ec.id = e.categoryid;
+CREATE VIEW `vw_EventRegistrations` AS
+	select e.Title as Event, s.Name as StudentName, s.Department, s.RegNo from student s join eventRegistration er
+    on s.id = er.studentid join event e on e.id = er.eventid ;
+CREATE VIEW `vw_societyDetails` AS
+	select s.Name, s.Status, s.FoundedDate, c.Name as Category from society s join societycategory c on 
+    s.categoryid = c.id;
+CREATE VIEW `vw_FeedbackDetails` AS
+	select f.Rating, f.Comment, s.name as Student, s.RegNo, s.Department, e.Title as Event 
+    from feedback f join student s on f.studentid = s.id join event e on e.id = f.eventid;
+    
+    --  ///////////
+    --   TRIGGERS
+    -- ///////////
+    DELIMITER //
+CREATE TRIGGER trg_duplicate_registration
+BEFORE INSERT ON eventregistration
+FOR EACH ROW
+BEGIN
+    DECLARE alreadyExists INT;
+    
+    SELECT COUNT(*) INTO alreadyExists
+    FROM eventregistration
+    WHERE studentId = NEW.studentId 
+    AND eventId = NEW.eventId;
+    
+    IF alreadyExists > 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Student already registered for this event!';
+    END IF;
+END //
+DELIMITER ;  
+
+DELIMITER //
+CREATE TRIGGER trg_membership_status
+AFTER UPDATE ON membership
+FOR EACH ROW
+BEGIN
+    IF NEW.status = 'inactive' AND OLD.status != 'inactive' THEN
+        UPDATE membershiprolehistory
+        SET endDate = NOW()
+        WHERE membershipId = OLD.id 
+        AND endDate IS NULL;
+    END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE TRIGGER trg_after_insert_orders
+AFTER INSERT ON orders
+FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log
+    (table_name, action, record_id, new_value)
+    VALUES
+    ('orders', 'INSERT', NEW.OrderID,CONCAT( 'CustomerID=', NEW.CustomerID, ', EmployeeID=', NEW.EmployeeID, ', OrderDate=', NEW.OrderDate)
+    );
+
+END //
+DELIMITER ;
+
+-- //////////////
+--   PROCEDURES 
+-- ///////////// 
+DELIMITER $$
+
+-- 1. Insert Event Category
+CREATE PROCEDURE `udstpInsertEventCategory` (IN cName VARCHAR(50), IN cDescription VARCHAR(255))
+BEGIN
+    INSERT INTO eventCategory(name, description)
+    VALUES(cName, cDescription);
+END$$
+
+-- 2. Insert Society Category
+CREATE PROCEDURE `udstpInsertSocietyCategory` (IN sName VARCHAR(50), IN sDescription VARCHAR(255))
+BEGIN
+    INSERT INTO societyCategory(name, description)
+    VALUES(sName, sDescription);
+END$$
+
+-- 3. Update Event Category
+CREATE PROCEDURE `udstpUpdateEventCategory` (IN eId INT, IN eName VARCHAR(50), IN eDescription VARCHAR(255))
+BEGIN
+    UPDATE eventCategory 
+    SET name = eName, 
+        description = eDescription
+    WHERE id = eId;
+END$$
+
+-- 4. Update Society Category
+CREATE PROCEDURE `udstpUpdateSocietyCategory` (IN sId INT, IN sName VARCHAR(50), IN sDescription VARCHAR(255))
+BEGIN
+    UPDATE societyCategory 
+    SET name = sName, 
+        description = sDescription
+    WHERE id = sId;
+END$$
+
+-- 5. Get Registered Students of an Event
+CREATE PROCEDURE `udstpGetResgisteredStudentsOfAnEvent` (IN eTitle VARCHAR(50))
+BEGIN
+    SELECT s.Name, s.Department, er.RegistrationDate 
+    FROM student s 
+    JOIN eventRegistration er ON s.Id = er.StudentId 
+    JOIN event e ON e.Id = er.EventId 
+    WHERE e.title = eTitle AND er.Status = 'registered';
+END$$
+
+-- 6. Get Members of Society (Fixed 'history' typo)
+CREATE PROCEDURE `udstpGetMembersOfSociety` (IN sTitle VARCHAR(50))
+BEGIN
+    SELECT st.Name, st.Department, r.Name AS Role
+    FROM student st
+    JOIN membership m ON st.Id = m.studentid
+    JOIN membershiprolehistory mr ON m.id = mr.membershipid
+    JOIN roles r ON mr.roleid = r.id
+    JOIN society s ON s.id = m.societyid
+    WHERE s.Name = sTitle AND m.status = 'active';
+END$$
+DELIMITER ;
+
+-- //////////
+--   
+-- //////////
+
+CREATE TABLE eventcategory_archive (
+    archive_id INT AUTO_INCREMENT PRIMARY KEY,
+    original_id INT,
+    name VARCHAR(50),
+    description VARCHAR(255),
+    deleted_at DATETIME DEFAULT NOW()
+);
+ 
+CREATE TABLE societycategory_archive (
+    archive_id INT AUTO_INCREMENT PRIMARY KEY,
+    original_id INT,
+    name VARCHAR(50),
+    description VARCHAR(255),
+    deleted_at DATETIME DEFAULT NOW()
+);
+ 
+CREATE TABLE sponsor_archive (
+    archive_id INT AUTO_INCREMENT PRIMARY KEY,
+    original_id INT,
+    email VARCHAR(100),
+    organization VARCHAR(100),
+    name VARCHAR(100),
+    phone VARCHAR(15),
+    deleted_at DATETIME DEFAULT NOW()
+);
+ 
+CREATE TABLE student_archive (
+    archive_id INT AUTO_INCREMENT PRIMARY KEY,
+    original_id INT,
+    email VARCHAR(100),
+    department VARCHAR(100),
+    name VARCHAR(40),
+    phone VARCHAR(15),
+    batchYear YEAR,
+    regNo VARCHAR(20),
+    status VARCHAR(20),
+    deleted_at DATETIME DEFAULT NOW()
+);
+ 
+CREATE TABLE venue_archive (
+    archive_id INT AUTO_INCREMENT PRIMARY KEY,
+    original_id INT,
+    name VARCHAR(50),
+    location VARCHAR(100),
+    capacity INT,
+    facilities VARCHAR(255),
+    deleted_at DATETIME DEFAULT NOW()
+);
+ 
+CREATE TABLE roles_archive (
+    archive_id INT AUTO_INCREMENT PRIMARY KEY,
+    original_id INT,
+    name VARCHAR(20),
+    description VARCHAR(255),
+    deleted_at DATETIME DEFAULT NOW()
+);
+ 
+CREATE TABLE society_archive (
+    archive_id INT AUTO_INCREMENT PRIMARY KEY,
+    original_id INT,
+    name VARCHAR(50),
+    status VARCHAR(20),
+    foundedDate DATE,
+    description VARCHAR(255),
+    categoryId INT,
+    logoPath VARCHAR(255),
+    deleted_at DATETIME DEFAULT NOW()
+);
+ 
+CREATE TABLE announcement_archive (
+    archive_id INT AUTO_INCREMENT PRIMARY KEY,
+    original_id INT,
+    title VARCHAR(50),
+    message VARCHAR(255),
+    postedAt DATETIME,
+    societyId INT,
+    deleted_at DATETIME DEFAULT NOW()
+);
+ 
+CREATE TABLE event_archive (
+    archive_id INT AUTO_INCREMENT PRIMARY KEY,
+    original_id INT,
+    title VARCHAR(50),
+    status VARCHAR(20),
+    description VARCHAR(255),
+    capacity INT,
+    eventDatetime DATETIME,
+    societyId INT,
+    venueId INT,
+    categoryId INT,
+    deleted_at DATETIME DEFAULT NOW()
+);
+ 
+CREATE TABLE eventregistration_archive (
+    archive_id INT AUTO_INCREMENT PRIMARY KEY,
+    original_id INT,
+    registrationDate DATETIME,
+    status VARCHAR(20),
+    cancellationDate DATETIME,
+    cancellationReason VARCHAR(100),
+    studentId INT,
+    eventId INT,
+    deleted_at DATETIME DEFAULT NOW()
+);
+ 
+CREATE TABLE sponsorship_archive (
+    archive_id INT AUTO_INCREMENT PRIMARY KEY,
+    original_id INT,
+    amount DECIMAL(10,2),
+    sponsorshipDate DATETIME,
+    sponsorId INT,
+    eventId INT,
+    deleted_at DATETIME DEFAULT NOW()
+);
+ 
+CREATE TABLE membership_archive (
+    archive_id INT AUTO_INCREMENT PRIMARY KEY,
+    original_id INT,
+    status VARCHAR(20),
+    joinDate DATETIME,
+    leaveDate DATETIME,
+    studentId INT,
+    societyId INT,
+    deleted_at DATETIME DEFAULT NOW()
+);
+ 
+CREATE TABLE membershiprolehistory_archive (
+    archive_id INT AUTO_INCREMENT PRIMARY KEY,
+    original_id INT,
+    startDate DATETIME,
+    endDate DATETIME,
+    roleId INT,
+    membershipId INT,
+    deleted_at DATETIME DEFAULT NOW()
+);
+ 
+CREATE TABLE feedback_archive (
+    archive_id INT AUTO_INCREMENT PRIMARY KEY,
+    original_id INT,
+    rating INT,
+    comment VARCHAR(255),
+    submittedAt DATETIME,
+    eventId INT,
+    studentId INT,
+    deleted_at DATETIME DEFAULT NOW()
+);
+ 
+ 
+ -- Triggers:
+ DELIMITER $$
+ 
+CREATE TRIGGER trg_eventcategory_backup
+BEFORE DELETE ON EventCategory
+FOR EACH ROW
+BEGIN
+    INSERT INTO eventcategory_archive (original_id, name, description)
+    VALUES (OLD.id, OLD.name, OLD.description);
+END$$
+ 
+CREATE TRIGGER trg_societycategory_backup
+BEFORE DELETE ON SocietyCategory
+FOR EACH ROW
+BEGIN
+    INSERT INTO societycategory_archive (original_id, name, description)
+    VALUES (OLD.id, OLD.name, OLD.description);
+END$$
+ 
+CREATE TRIGGER trg_sponsor_backup
+BEFORE DELETE ON Sponsor
+FOR EACH ROW
+BEGIN
+    INSERT INTO sponsor_archive (original_id, email, organization, name, phone)
+    VALUES (OLD.id, OLD.email, OLD.organization, OLD.name, OLD.phone);
+END$$
+ 
+CREATE TRIGGER trg_student_backup
+BEFORE DELETE ON Student
+FOR EACH ROW
+BEGIN
+    INSERT INTO student_archive (original_id, email, department, name, phone, batchYear, regNo, status)
+    VALUES (OLD.id, OLD.email, OLD.department, OLD.name, OLD.phone, OLD.batchYear, OLD.regNo, OLD.status);
+END$$
+ 
+CREATE TRIGGER trg_venue_backup
+BEFORE DELETE ON Venue
+FOR EACH ROW
+BEGIN
+    INSERT INTO venue_archive (original_id, name, location, capacity, facilities)
+    VALUES (OLD.id, OLD.name, OLD.location, OLD.capacity, OLD.facilities);
+END$$
+ 
+CREATE TRIGGER trg_roles_backup
+BEFORE DELETE ON roles
+FOR EACH ROW
+BEGIN
+    INSERT INTO roles_archive (original_id, name, description)
+    VALUES (OLD.id, OLD.name, OLD.description);
+END$$
+ 
+CREATE TRIGGER trg_society_backup
+BEFORE DELETE ON Society
+FOR EACH ROW
+BEGIN
+    INSERT INTO society_archive (original_id, name, status, foundedDate, description, categoryId, logoPath)
+    VALUES (OLD.id, OLD.name, OLD.status, OLD.foundedDate, OLD.description, OLD.categoryId, OLD.logoPath);
+END$$
+ 
+CREATE TRIGGER trg_announcement_backup
+BEFORE DELETE ON Announcement
+FOR EACH ROW
+BEGIN
+    INSERT INTO announcement_archive (original_id, title, message, postedAt, societyId)
+    VALUES (OLD.id, OLD.title, OLD.message, OLD.postedAt, OLD.societyId);
+END$$
+ 
+CREATE TRIGGER trg_event_backup
+BEFORE DELETE ON Event
+FOR EACH ROW
+BEGIN
+    INSERT INTO event_archive (original_id, title, status, description, capacity, eventDatetime, societyId, venueId, categoryId)
+    VALUES (OLD.id, OLD.title, OLD.status, OLD.description, OLD.capacity, OLD.eventDatetime, OLD.societyId, OLD.venueId, OLD.categoryId);
+END$$
+ 
+CREATE TRIGGER trg_eventregistration_backup
+BEFORE DELETE ON EventRegistration
+FOR EACH ROW
+BEGIN
+    INSERT INTO eventregistration_archive (original_id, registrationDate, status, cancellationDate, cancellationReason, studentId, eventId)
+    VALUES (OLD.id, OLD.registrationDate, OLD.status, OLD.cancellationDate, OLD.cancellationReason, OLD.studentId, OLD.eventId);
+END$$
+ 
+CREATE TRIGGER trg_sponsorship_backup
+BEFORE DELETE ON Sponsorship
+FOR EACH ROW
+BEGIN
+    INSERT INTO sponsorship_archive (original_id, amount, sponsorshipDate, sponsorId, eventId)
+    VALUES (OLD.id, OLD.amount, OLD.sponsorshipDate, OLD.sponsorId, OLD.eventId);
+END$$
+ 
+CREATE TRIGGER trg_membership_backup
+BEFORE DELETE ON Membership
+FOR EACH ROW
+BEGIN
+    INSERT INTO membership_archive (original_id, status, joinDate, leaveDate, studentId, societyId)
+    VALUES (OLD.id, OLD.status, OLD.joinDate, OLD.leaveDate, OLD.studentId, OLD.societyId);
+END$$
+ 
+CREATE TRIGGER trg_membershiprolehistory_backup
+BEFORE DELETE ON MembershipRoleHistory
+FOR EACH ROW
+BEGIN
+    INSERT INTO membershiprolehistory_archive (original_id, startDate, endDate, roleId, membershipId)
+    VALUES (OLD.id, OLD.startDate, OLD.endDate, OLD.roleId, OLD.membershipId);
+END$$
+ 
+CREATE TRIGGER trg_feedback_backup
+BEFORE DELETE ON Feedback
+FOR EACH ROW
+BEGIN
+    INSERT INTO feedback_archive (original_id, rating, comment, submittedAt, eventId, studentId)
+    VALUES (OLD.id, OLD.rating, OLD.comment, OLD.submittedAt, OLD.eventId, OLD.studentId);
+END$$
+ 
+DELIMITER ; 
