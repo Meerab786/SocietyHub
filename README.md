@@ -35,17 +35,17 @@ The project combines **Object-Oriented Programming (OOP)**, **Database Managemen
 
 # ✨ Key Features
 
-* 👥 **Student Management**
-* 🏛️ **Society Management**
-* 📅 **Event Management**
-* 🎫 **Membership Management**
-* 📍 **Venue Management**
-* 🤝 **Sponsor & Sponsorship Management**
-* 📝 **Event Registrations**
-* 📢 **Announcements**
-* ⭐ **Feedback & Ratings**
-* 📊 **Reports & Analytics**
-* 🖥️ **Interactive Dashboard**
+*  **Student Management**
+*  **Society Management**
+*  **Event Management**
+*  **Membership Management**
+*  **Venue Management**
+*  **Sponsor & Sponsorship Management**
+*  **Event Registrations**
+*  **Announcements**
+*  **Feedback & Ratings**
+*  **Reports & Analytics**
+*  **Interactive Dashboard**
 
 ---
 
