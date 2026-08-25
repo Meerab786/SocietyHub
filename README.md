@@ -29,7 +29,7 @@ The project combines **Object-Oriented Programming (OOP)**, **Database Managemen
 
 ## 🎥 Project Demo
 
-▶️ **Project Video:** [SocietyHub.mp4](SocietyHub.mp4)
+▶️ **Project Video:** [SocietyHub.mp4](SOCIETYHUB.mp4)
 
 ---
 
